@@ -5,32 +5,54 @@ local search = require("git-conflict.search")
 ---@param position ConflictPosition
 ---@param replacement string[]
 local replace_conflict = function(bufnr, position, replacement)
-    vim.api.nvim_buf_set_lines(bufnr, position.current.range_start, position.incoming.range_end + 1, true, replacement)
+    vim.api.nvim_buf_set_lines(
+        bufnr,
+        position.current.range_start,
+        position.incoming.range_end + 1,
+        true,
+        replacement
+    )
 end
 
 ---@param bufnr integer
 ---@param position ConflictPosition
 local choose_current = function(bufnr, position)
-    local choosen =
-        vim.api.nvim_buf_get_lines(bufnr, position.current.content_start, position.current.content_end + 1, true)
+    local choosen = vim.api.nvim_buf_get_lines(
+        bufnr,
+        position.current.content_start,
+        position.current.content_end + 1,
+        true
+    )
     replace_conflict(bufnr, position, choosen)
 end
 
 ---@param bufnr integer
 ---@param position ConflictPosition
 local choose_incoming = function(bufnr, position)
-    local choosen =
-        vim.api.nvim_buf_get_lines(bufnr, position.incoming.content_start, position.incoming.content_end + 1, true)
+    local choosen = vim.api.nvim_buf_get_lines(
+        bufnr,
+        position.incoming.content_start,
+        position.incoming.content_end + 1,
+        true
+    )
     replace_conflict(bufnr, position, choosen)
 end
 
 ---@param bufnr integer
 ---@param position ConflictPosition
 local choose_both = function(bufnr, position)
-    local current =
-        vim.api.nvim_buf_get_lines(bufnr, position.current.content_start, position.current.content_end + 1, true)
-    local incoming =
-        vim.api.nvim_buf_get_lines(bufnr, position.incoming.content_start, position.incoming.content_end + 1, true)
+    local current = vim.api.nvim_buf_get_lines(
+        bufnr,
+        position.current.content_start,
+        position.current.content_end + 1,
+        true
+    )
+    local incoming = vim.api.nvim_buf_get_lines(
+        bufnr,
+        position.incoming.content_start,
+        position.incoming.content_end + 1,
+        true
+    )
     local choosen = {}
     vim.list_extend(choosen, current)
     vim.list_extend(choosen, incoming)
@@ -39,9 +61,7 @@ end
 
 ---@param bufnr integer
 ---@param position ConflictPosition
-local choose_none = function(bufnr, position)
-    replace_conflict(bufnr, position, {})
-end
+local choose_none = function(bufnr, position) replace_conflict(bufnr, position, {}) end
 
 ---@param bufnr integer
 ---@param positions ConflictPosition[]
@@ -63,21 +83,28 @@ local M = {}
 
 ---@param conflict_marker string
 M.set_global_keymaps = function(conflict_marker)
-    local opts_with_desc = function(desc)
-        return { noremap = true, silent = true, desc = KEYMAP_PREFIX .. " " .. desc }
-    end
+    local opts_with_desc = function(desc) return { desc = KEYMAP_PREFIX .. " " .. desc } end
 
-    vim.keymap.set("n", "]x", function()
-        vim.fn.search(conflict_marker, "w")
-    end, opts_with_desc("Next Conflict"))
+    vim.keymap.set(
+        "n",
+        "]x",
+        function() vim.fn.search(conflict_marker, "w") end,
+        opts_with_desc("Next Conflict")
+    )
 
-    vim.keymap.set("n", "[x", function()
-        vim.fn.search(conflict_marker, "w")
-    end, opts_with_desc("Previous Conflict"))
+    vim.keymap.set(
+        "n",
+        "[x",
+        function() vim.fn.search(conflict_marker, "w") end,
+        opts_with_desc("Previous Conflict")
+    )
 
-    vim.keymap.set("n", "<leader>xq", function()
-        search.setqflist()
-    end, opts_with_desc("Fill quickfix list with all conflicts"))
+    vim.keymap.set(
+        "n",
+        "<leader>xq",
+        function() search.setqflist() end,
+        opts_with_desc("Fill quickfix list with all conflicts")
+    )
 end
 
 ---@param bufnr integer
@@ -85,7 +112,7 @@ end
 ---@param callback function
 M.set_buf_keymaps = function(bufnr, positions, callback)
     local opts_with_desc = function(desc)
-        return { noremap = true, silent = true, buffer = bufnr, desc = KEYMAP_PREFIX .. " " .. desc }
+        return { buffer = bufnr, desc = KEYMAP_PREFIX .. " " .. desc }
     end
 
     vim.keymap.set("n", "<leader>co", function()

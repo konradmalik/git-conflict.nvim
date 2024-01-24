@@ -1,9 +1,7 @@
 local conflicts = {}
 local gather_stdout = function(_, data, _)
     for _, entry in ipairs(data) do
-        if entry and entry ~= "" then
-            table.insert(conflicts, entry)
-        end
+        if entry and entry ~= "" then table.insert(conflicts, entry) end
     end
 end
 
@@ -31,8 +29,6 @@ end
 
 local M = {}
 
-M.setqflist = function()
-    start_conflicts_job()
-end
+M.setqflist = function() start_conflicts_job() end
 
 return M

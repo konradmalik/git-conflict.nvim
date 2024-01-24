@@ -58,9 +58,7 @@ local config = {
 ---@param name string?
 ---@return table<string, string>
 local function get_hl(name)
-    if not name then
-        return {}
-    end
+    if not name then return {} end
     return api.nvim_get_hl(NAMESPACE, { name = name })
 end
 
@@ -71,9 +69,7 @@ end
 ---@param range_end integer
 ---@return integer? extmark_id
 local function hl_range(bufnr, hl, range_start, range_end)
-    if not range_start or not range_end then
-        return
-    end
+    if not range_start or not range_end then return end
     return api.nvim_buf_set_extmark(bufnr, NAMESPACE, range_start, 0, {
         hl_group = hl,
         hl_eol = true,
@@ -197,17 +193,11 @@ local function set_highlights(highlights)
 end
 --
 ---@return boolean
-local function buf_can_have_conflicts()
-    return vim.fn.search(conflict_start, "cnw", nil, 500) > 0
-end
+local function buf_can_have_conflicts() return vim.fn.search(conflict_start, "cnw", nil, 500) > 0 end
 
-local function clear_highlights(bufnr)
-    api.nvim_buf_clear_namespace(bufnr, NAMESPACE, 0, -1)
-end
+local function clear_highlights(bufnr) api.nvim_buf_clear_namespace(bufnr, NAMESPACE, 0, -1) end
 
-local function clear_diagnostic(bufnr)
-    vim.diagnostic.reset(NAMESPACE, bufnr)
-end
+local function clear_diagnostic(bufnr) vim.diagnostic.reset(NAMESPACE, bufnr) end
 --
 ---Set diagnostics for all conflicts
 ---@param bufnr integer
@@ -242,39 +232,27 @@ local function run(bufnr, range_start, range_end)
     if has_conflict then
         highlight_conflicts(bufnr, positions)
 
-        if config.enable_diagnostics then
-            set_diagnostics(bufnr, positions)
-        end
+        if config.enable_diagnostics then set_diagnostics(bufnr, positions) end
 
-        if config.enable_keymaps then
-            keymaps.set_buf_keymaps(bufnr, positions, M.refresh)
-        end
+        if config.enable_keymaps then keymaps.set_buf_keymaps(bufnr, positions, M.refresh) end
     end
     return positions
 end
 
 ---@param bufnr integer?
 M.clear = function(bufnr)
-    if bufnr and not api.nvim_buf_is_valid(bufnr) then
-        return
-    end
+    if bufnr and not api.nvim_buf_is_valid(bufnr) then return end
     bufnr = bufnr or 0
     clear_highlights(bufnr)
-    if config.enable_diagnostics then
-        clear_diagnostic(bufnr)
-    end
-    if config.enable_keymaps then
-        keymaps.del_buf_keymaps(bufnr)
-    end
+    if config.enable_diagnostics then clear_diagnostic(bufnr) end
+    if config.enable_keymaps then keymaps.del_buf_keymaps(bufnr) end
 end
 
 local buf_conflicts = {}
 
 ---@param bufnr integer?
 function M.refresh(bufnr)
-    if not bufnr then
-        bufnr = vim.api.nvim_get_current_buf()
-    end
+    if not bufnr then bufnr = vim.api.nvim_get_current_buf() end
 
     if buf_conflicts[bufnr] then
         M.clear(bufnr)
@@ -291,16 +269,12 @@ function M.setup(user_config)
     config = vim.tbl_deep_extend("force", config, user_config or {})
 
     set_highlights(config.highlights)
-    if config.enable_keymaps then
-        keymaps.set_global_keymaps(conflict_start)
-    end
+    if config.enable_keymaps then keymaps.set_global_keymaps(conflict_start) end
 
     api.nvim_create_augroup(AUGROUP_NAME, { clear = true })
     api.nvim_create_autocmd("ColorScheme", {
         group = AUGROUP_NAME,
-        callback = function()
-            set_highlights(config.highlights)
-        end,
+        callback = function() set_highlights(config.highlights) end,
     })
 
     if config.enable_autocommand then
