@@ -1,5 +1,6 @@
-local KEYMAP_PREFIX = "[GitConflict]"
+local gc = require("git-conflict")
 local search = require("git-conflict.search")
+local conflict_marker = require("git-conflict.conflicts").conflict_start
 
 ---@param bufnr integer
 ---@param position ConflictPosition
@@ -73,79 +74,55 @@ local process_current_conflict = function(bufnr, positions, action)
     for _, position in ipairs(positions) do
         if position.current.range_start <= line and position.incoming.range_end >= line then
             action(bufnr, position)
+            -- important to refresh after changing the conflict
+            gc.refresh(bufnr)
             return
         end
     end
-    vim.notify("no conflict at that line")
+    vim.notify("no conflict at that line", vim.log.levels.WARN)
 end
 
 local M = {}
 
----@param conflict_marker string
-M.set_global_keymaps = function(conflict_marker)
-    local opts_with_desc = function(desc) return { desc = KEYMAP_PREFIX .. " " .. desc } end
+---find next conflict in the current buffer
+M.buf_next_conflict = function() vim.fn.search(conflict_marker, "w") end
 
-    vim.keymap.set(
-        "n",
-        "]x",
-        function() vim.fn.search(conflict_marker, "w") end,
-        opts_with_desc("Next Conflict")
-    )
+---find prev conflict in the current buffer
+M.buf_prev_conflict = function() vim.fn.search(conflict_marker, "bw") end
 
-    vim.keymap.set(
-        "n",
-        "[x",
-        function() vim.fn.search(conflict_marker, "w") end,
-        opts_with_desc("Previous Conflict")
-    )
+---send all conflicts in the repo to QF list
+M.send_conflicts_to_qf = search.setqflist
 
-    vim.keymap.set(
-        "n",
-        "<leader>xq",
-        function() search.setqflist() end,
-        opts_with_desc("Fill quickfix list with all conflicts")
-    )
+---Choose ours (current/HEAD/LOCAL)
+---@param bufnr integer?
+M.buf_conflict_choose_current = function(bufnr)
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    local positions = gc.positions(bufnr) or {}
+    process_current_conflict(bufnr, positions, choose_current)
 end
 
----@param bufnr integer
----@param positions ConflictPosition[]
----@param callback function
-M.set_buf_keymaps = function(bufnr, positions, callback)
-    local opts_with_desc = function(desc)
-        return { buffer = bufnr, desc = KEYMAP_PREFIX .. " " .. desc }
-    end
-
-    vim.keymap.set("n", "<leader>co", function()
-        process_current_conflict(bufnr, positions, choose_current)
-        callback(bufnr)
-    end, opts_with_desc("Choose ours (current/HEAD/LOCAL)"))
-
-    vim.keymap.set("n", "<leader>ct", function()
-        process_current_conflict(bufnr, positions, choose_incoming)
-        callback(bufnr)
-    end, opts_with_desc("Choose theirs (incoming/REMOTE)"))
-
-    vim.keymap.set("n", "<leader>cb", function()
-        process_current_conflict(bufnr, positions, choose_both)
-        callback(bufnr)
-    end, opts_with_desc("Choose both"))
-
-    vim.keymap.set("n", "<leader>cn", function()
-        process_current_conflict(bufnr, positions, choose_none)
-        callback(bufnr)
-    end, opts_with_desc("Choose none"))
+---Choose theirs (incoming/REMOTE)
+---@param bufnr integer?
+M.buf_conflict_choose_incoming = function(bufnr)
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    local positions = gc.positions(bufnr) or {}
+    process_current_conflict(bufnr, positions, choose_incoming)
 end
 
-M.del_buf_keymaps = function(bufnr)
-    local mode = "n"
-    local keymaps = vim.api.nvim_buf_get_keymap(bufnr, mode)
-    for _, keymap in ipairs(keymaps) do
-        if keymap.desc then
-            if vim.startswith(keymap.desc, KEYMAP_PREFIX) then
-                vim.api.nvim_buf_del_keymap(bufnr, mode, keymap.lhs)
-            end
-        end
-    end
+---Choose both
+---@param bufnr integer?
+M.buf_conflict_choose_both = function(bufnr)
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    local positions = gc.positions(bufnr) or {}
+    process_current_conflict(bufnr, positions, choose_both)
+end
+
+---Choose none
+---@param bufnr integer?
+M.buf_conflict_choose_none = function(bufnr)
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    local positions = gc.positions(bufnr) or {}
+    process_current_conflict(bufnr, positions, choose_none)
 end
 
 return M

@@ -6,8 +6,8 @@ local rshift, band = bit.rshift, bit.band
 --- Returns a table containing the RGB values encoded inside 24 least
 --- significant bits of the number @rgb_24bit
 ---
---@param rgb_24bit (number) 24-bit RGB value
---@returns (table) with keys 'r', 'g', 'b' in [0,255]
+---@param rgb_24bit (number) 24-bit RGB value
+---@return {r: number, g: number, b: number } # values in [0,255]
 local function decode_24bit_rgb(rgb_24bit)
     vim.validate({ rgb_24bit = { rgb_24bit, "n", true } })
     local r = band(rshift(rgb_24bit, 16), 255)
@@ -18,10 +18,10 @@ end
 
 local function alter(attr, percent) return math.floor(attr * (100 + percent) / 100) end
 
----@source https://stackoverflow.com/q/5560248
----@see: https://stackoverflow.com/a/37797380
 ---Darken a specified hex color
----@param color string
+---source https://stackoverflow.com/q/5560248
+---see: https://stackoverflow.com/a/37797380
+---@param color number
 ---@param percent number
 ---@return string
 function M.shade_color(color, percent)

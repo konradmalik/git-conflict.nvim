@@ -1,7 +1,5 @@
--- adapted from https://github.com/akinsho/git-conflict.nvim
 local color = require("git-conflict.colors")
-local keymaps = require("git-conflict.keymaps")
-local api = vim.api
+local conflicts = require("git-conflict.conflicts")
 
 --- @class ConflictHighlights
 --- @field current string
@@ -27,13 +25,12 @@ local INCOMING_LABEL_HL = "GitConflictIncomingLabel"
 local ANCESTOR_LABEL_HL = "GitConflictAncestorLabel"
 local PRIORITY = vim.highlight.priorities.diagnostics - 1
 local NAME = "git-conflict"
-local NAMESPACE = api.nvim_create_namespace(NAME)
-local AUGROUP_NAME = "GitConflictCommands"
+local NAMESPACE = vim.api.nvim_create_namespace(NAME)
 
-local conflict_start = "^<<<<<<<"
-local conflict_middle = "^======="
-local conflict_end = "^>>>>>>>"
-local conflict_ancestor = "^|||||||"
+local conflict_start = conflicts.conflict_start
+local conflict_middle = conflicts.conflict_middle
+local conflict_end = conflicts.conflict_end
+local conflict_ancestor = conflicts.conflict_ancestor
 
 local DEFAULT_CURRENT_BG_COLOR = 4218238 -- #405d7e
 local DEFAULT_INCOMING_BG_COLOR = 3229523 -- #314753
@@ -50,16 +47,14 @@ local config = {
         incoming = "(Incoming Change)",
         ancestor = "(Base Change)",
     },
-    enable_autocommand = true,
     enable_diagnostics = true,
-    enable_keymaps = true,
 }
 
 ---@param name string?
----@return table<string, string>
+---@return table<string, any>
 local function get_hl(name)
     if not name then return {} end
-    return api.nvim_get_hl(NAMESPACE, { name = name })
+    return vim.api.nvim_get_hl(NAMESPACE, { name = name })
 end
 
 ---Set an extmark for each section of the git conflict
@@ -70,7 +65,7 @@ end
 ---@return integer? extmark_id
 local function hl_range(bufnr, hl, range_start, range_end)
     if not range_start or not range_end then return end
-    return api.nvim_buf_set_extmark(bufnr, NAMESPACE, range_start, 0, {
+    return vim.api.nvim_buf_set_extmark(bufnr, NAMESPACE, range_start, 0, {
         hl_group = hl,
         hl_eol = true,
         hl_mode = "combine",
@@ -86,7 +81,7 @@ end
 ---@param lnum integer
 ---@return integer extmark id
 local function draw_section_label(bufnr, hl_group, label, lnum)
-    return api.nvim_buf_set_extmark(bufnr, NAMESPACE, lnum, 0, {
+    return vim.api.nvim_buf_set_extmark(bufnr, NAMESPACE, lnum, 0, {
         hl_group = hl_group,
         virt_text = { { label, hl_group } },
         virt_text_pos = "eol",
@@ -128,7 +123,7 @@ end
 ---@return ConflictPosition[]
 local function detect_conflicts(lines)
     local positions = {}
-    local position, has_start, has_middle, has_ancestor = nil, false, false, false
+    local position, has_start, has_middle, has_ancestor = {}, false, false, false
     for index, line in ipairs(lines) do
         local lnum = index - 1
         if line:match(conflict_start) then
@@ -166,7 +161,7 @@ local function detect_conflicts(lines)
             position.incoming.content_end = lnum - 1
             positions[#positions + 1] = position
 
-            position, has_start, has_middle, has_ancestor = nil, false, false, false
+            position, has_start, has_middle, has_ancestor = {}, false, false, false
         end
     end
     return #positions > 0, positions
@@ -184,21 +179,30 @@ local function set_highlights(highlights)
     local current_label_bg = color.shade_color(current_bg, 30)
     local incoming_label_bg = color.shade_color(incoming_bg, 30)
     local ancestor_label_bg = color.shade_color(ancestor_bg, 30)
-    api.nvim_set_hl(0, CURRENT_HL, { background = current_bg, default = true })
-    api.nvim_set_hl(0, INCOMING_HL, { background = incoming_bg, default = true })
-    api.nvim_set_hl(0, ANCESTOR_HL, { background = ancestor_bg, default = true })
-    api.nvim_set_hl(0, CURRENT_LABEL_HL, { background = current_label_bg, default = true })
-    api.nvim_set_hl(0, INCOMING_LABEL_HL, { background = incoming_label_bg, default = true })
-    api.nvim_set_hl(0, ANCESTOR_LABEL_HL, { background = ancestor_label_bg, default = true })
+    vim.api.nvim_set_hl(0, CURRENT_HL, { background = current_bg, default = true })
+    vim.api.nvim_set_hl(0, INCOMING_HL, { background = incoming_bg, default = true })
+    vim.api.nvim_set_hl(0, ANCESTOR_HL, { background = ancestor_bg, default = true })
+    vim.api.nvim_set_hl(0, CURRENT_LABEL_HL, { background = current_label_bg, default = true })
+    vim.api.nvim_set_hl(0, INCOMING_LABEL_HL, { background = incoming_label_bg, default = true })
+    vim.api.nvim_set_hl(0, ANCESTOR_LABEL_HL, { background = ancestor_label_bg, default = true })
 end
---
----@return boolean
-local function buf_can_have_conflicts() return vim.fn.search(conflict_start, "cnw", nil, 500) > 0 end
 
-local function clear_highlights(bufnr) api.nvim_buf_clear_namespace(bufnr, NAMESPACE, 0, -1) end
+---@param bufnr integer?
+---@return boolean
+local function buf_can_have_conflicts(bufnr)
+    bufnr = bufnr or 0
+    local result = -1
+    vim.api.nvim_buf_call(
+        bufnr,
+        function() result = vim.fn.search(conflict_start, "cnw", nil, 500) end
+    )
+    return result > 0
+end
+
+local function clear_highlights(bufnr) vim.api.nvim_buf_clear_namespace(bufnr, NAMESPACE, 0, -1) end
 
 local function clear_diagnostic(bufnr) vim.diagnostic.reset(NAMESPACE, bufnr) end
---
+
 ---Set diagnostics for all conflicts
 ---@param bufnr integer
 ---@param positions table
@@ -217,8 +221,6 @@ local function set_diagnostics(bufnr, positions)
     vim.diagnostic.set(NAMESPACE, bufnr, diagnostics)
 end
 
-local M = {}
-
 ---Find all conflicts and process them
 ---@param bufnr integer?
 ---@param range_start integer?
@@ -226,66 +228,68 @@ local M = {}
 ---@return ConflictPosition[]
 local function run(bufnr, range_start, range_end)
     bufnr = bufnr or 0
-    local lines = api.nvim_buf_get_lines(bufnr or 0, range_start or 0, range_end or -1, false)
+    local lines = vim.api.nvim_buf_get_lines(bufnr or 0, range_start or 0, range_end or -1, false)
     local has_conflict, positions = detect_conflicts(lines)
 
     if has_conflict then
+        vim.api.nvim_exec_autocmds("User", {
+            pattern = "GitConflict",
+            modeline = false,
+            data = { buf = bufnr, positions = positions },
+        })
+
         highlight_conflicts(bufnr, positions)
 
         if config.enable_diagnostics then set_diagnostics(bufnr, positions) end
-
-        if config.enable_keymaps then keymaps.set_buf_keymaps(bufnr, positions, M.refresh) end
     end
     return positions
 end
 
+local M = {}
+
+---Clears all conflict highlights and diagnostics
 ---@param bufnr integer?
 M.clear = function(bufnr)
-    if bufnr and not api.nvim_buf_is_valid(bufnr) then return end
     bufnr = bufnr or 0
+    if not vim.api.nvim_buf_is_valid(bufnr) then return end
     clear_highlights(bufnr)
     if config.enable_diagnostics then clear_diagnostic(bufnr) end
-    if config.enable_keymaps then keymaps.del_buf_keymaps(bufnr) end
 end
 
+---@type table<integer, ConflictPosition[]>
 local buf_conflicts = {}
 
+---Refreshes conflict highlight and diagnostics
 ---@param bufnr integer?
 function M.refresh(bufnr)
-    if not bufnr then bufnr = vim.api.nvim_get_current_buf() end
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
 
     if buf_conflicts[bufnr] then
         M.clear(bufnr)
         buf_conflicts[bufnr] = nil
     end
 
-    if buf_can_have_conflicts() then
+    if buf_can_have_conflicts(bufnr) then
         local positions = run(bufnr)
         buf_conflicts[bufnr] = positions
     end
 end
 
+---Gets conflicts positions for a given buffer
+---@param bufnr integer
+---@return ConflictPosition[]
+function M.positions(bufnr) return buf_conflicts[bufnr] end
+
+---Call once to setup the plugin
 function M.setup(user_config)
     config = vim.tbl_deep_extend("force", config, user_config or {})
 
     set_highlights(config.highlights)
-    if config.enable_keymaps then keymaps.set_global_keymaps(conflict_start) end
 
-    api.nvim_create_augroup(AUGROUP_NAME, { clear = true })
-    api.nvim_create_autocmd("ColorScheme", {
-        group = AUGROUP_NAME,
+    vim.api.nvim_create_autocmd("ColorScheme", {
+        group = vim.api.nvim_create_augroup("GitConflictHighlights", { clear = true }),
         callback = function() set_highlights(config.highlights) end,
     })
-
-    if config.enable_autocommand then
-        api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-            group = AUGROUP_NAME,
-            callback = function(args)
-                local buf = args.buf
-                M.refresh(buf)
-            end,
-        })
-    end
 end
 
 return M
