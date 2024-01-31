@@ -4,8 +4,8 @@ My refactored, simplified and in some cases extended version of [git-conflict](h
 
 Main aim:
 
--   must be simple, very lightweight and maintainable by me.
--   be more of a library that a typical plugin.
+-   simple, very lightweight and maintainable by me
+-   more of a library that a typical plugin
 
 ## TL;DR
 
@@ -32,7 +32,7 @@ This plugin defined a `GitConflict` `User` event that is triggered on every `M.r
 
 It's useful to define other buffer-specific commands, autocommands or keymaps based on that event.
 
-Exemplary usage in your neovim configuration:
+Exemplary usage in in my Neovim configuration:
 
 ```lua
 local cmd = require("git-conflict.commands")
@@ -81,28 +81,28 @@ vim.api.nvim_create_autocmd("User", {
             "n",
             "<leader>co",
             function() cmd.buf_conflict_choose_current(buf) end,
-            buf_opts_with_desc("Choose ours (current/HEAD/LOCAL)")
+            buf_opts_with_desc(buf, "Choose ours (current/HEAD/LOCAL)")
         )
 
         vim.keymap.set(
             "n",
             "<leader>ct",
             function() cmd.buf_conflict_choose_incoming(buf) end,
-            buf_opts_with_desc("Choose theirs (incoming/REMOTE)")
+            buf_opts_with_desc(buf, "Choose theirs (incoming/REMOTE)")
         )
 
         vim.keymap.set(
             "n",
             "<leader>cb",
             function() cmd.buf_conflict_choose_both(buf) end,
-            buf_opts_with_desc("Choose both")
+            buf_opts_with_desc(buf, "Choose both")
         )
 
         vim.keymap.set(
             "n",
             "<leader>cn",
             function() cmd.buf_conflict_choose_none(buf) end,
-            buf_opts_with_desc("Choose none")
+            buf_opts_with_desc(buf, "Choose none")
         )
     end,
 })
@@ -110,8 +110,7 @@ vim.api.nvim_create_autocmd("User", {
 
 ## Notable features:
 
--   plugin works more lazily
-    -   executes via autocmd only when buffer is likely to have conflicts
+-   you decide when and how you use this plugin
 -   publishes `GitConflict` `User` for easy integration
 -   does not scan the whole repo for all conflicted files
 -   creates diagnostics for conflicts
@@ -120,6 +119,7 @@ vim.api.nvim_create_autocmd("User", {
     -   choose ours/theirs/both versions
     -   on demand to send conflicts in all files to a QF list
 
-Sorry, not much more documentation this time. See code for details.
+See the code for more details.
+
 Notably the module returned in `init.lua` should be self-explanatory.
 Useful functions can be imported and used via `require("git-conflict.commands")`.
