@@ -167,24 +167,20 @@ local function detect_conflicts(lines)
     return #positions > 0, positions
 end
 
----Derive the colour of the section label highlights based on each sections highlights
+---Derive the color of the section label highlights based on each sections highlights
 ---@param highlights ConflictHighlights
 local function set_highlights(highlights)
-    local current_color = get_hl(highlights.current)
-    local incoming_color = get_hl(highlights.incoming)
-    local ancestor_color = get_hl(highlights.ancestor)
-    local current_bg = current_color.background or DEFAULT_CURRENT_BG_COLOR
-    local incoming_bg = incoming_color.background or DEFAULT_INCOMING_BG_COLOR
-    local ancestor_bg = ancestor_color.background or DEFAULT_ANCESTOR_BG_COLOR
-    local current_label_bg = color.shade_color(current_bg, 30)
-    local incoming_label_bg = color.shade_color(incoming_bg, 30)
-    local ancestor_label_bg = color.shade_color(ancestor_bg, 30)
-    vim.api.nvim_set_hl(0, CURRENT_HL, { background = current_bg, default = true })
-    vim.api.nvim_set_hl(0, INCOMING_HL, { background = incoming_bg, default = true })
-    vim.api.nvim_set_hl(0, ANCESTOR_HL, { background = ancestor_bg, default = true })
-    vim.api.nvim_set_hl(0, CURRENT_LABEL_HL, { background = current_label_bg, default = true })
-    vim.api.nvim_set_hl(0, INCOMING_LABEL_HL, { background = incoming_label_bg, default = true })
-    vim.api.nvim_set_hl(0, ANCESTOR_LABEL_HL, { background = ancestor_label_bg, default = true })
+    local function inner_set(hls, default_bg, hl, label_hl)
+        local current_color = get_hl(hls)
+        local current_bg = current_color.background or default_bg
+        local current_label_bg = color.shade_color(current_bg, 30)
+        vim.api.nvim_set_hl(0, hl, { background = current_bg, default = true })
+        vim.api.nvim_set_hl(0, label_hl, { background = current_label_bg, default = true })
+    end
+
+    inner_set(highlights.current, DEFAULT_CURRENT_BG_COLOR, CURRENT_HL, CURRENT_LABEL_HL)
+    inner_set(highlights.incoming, DEFAULT_INCOMING_BG_COLOR, INCOMING_HL, INCOMING_LABEL_HL)
+    inner_set(highlights.ancestor, DEFAULT_ANCESTOR_BG_COLOR, ANCESTOR_HL, ANCESTOR_LABEL_HL)
 end
 
 ---@param bufnr integer?
