@@ -23,10 +23,10 @@ local function alter(attr, percent) return math.floor(attr * (100 + percent) / 1
 ---see: https://stackoverflow.com/a/37797380
 ---@param color number
 ---@param percent number
----@return string
+---@return string?
 function M.shade_color(color, percent)
     local rgb = decode_24bit_rgb(color)
-    if not rgb.r or not rgb.g or not rgb.b then return "NONE" end
+    if not rgb.r or not rgb.g or not rgb.b then return end
     local r, g, b = alter(rgb.r, percent), alter(rgb.g, percent), alter(rgb.b, percent)
     r, g, b = math.min(r, 255), math.min(g, 255), math.min(b, 255)
     return string.format("#%02x%02x%02x", r, g, b)

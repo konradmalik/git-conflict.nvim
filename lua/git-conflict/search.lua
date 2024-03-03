@@ -36,8 +36,6 @@ local start_conflicts_job = function()
     })
 end
 
-local M = {}
-
-M.setqflist = function() start_conflicts_job() end
-
-return M
+return {
+    setqflist = start_conflicts_job,
+}
