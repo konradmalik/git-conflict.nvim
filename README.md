@@ -46,13 +46,7 @@ local function buf_opts_with_desc(bufnr, desc)
     return opts
 end
 
-gc.setup({
-    highlights = {
-        current = "DiffText",
-        incoming = "DiffAdd",
-        ancestor = "DiffChange",
-    },
-})
+gc.setup()
 
 local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
 
@@ -113,13 +107,12 @@ vim.api.nvim_create_autocmd("User", {
 ## Notable features:
 
 -   you decide when and how you use this plugin
--   publishes `GitConflict` `User` for easy integration
--   does not scan the whole repo for all conflicted files
+-   publishes `GitConflict` `User` autocommand for easy integration
 -   creates diagnostics for conflicts
 -   commands (see `commands.lua`)
     -   jump to prev/next conflict
     -   choose ours/theirs/both versions
-    -   on demand to send conflicts in all files to a QF list
+    -   send conflicts in current repo to a QF list
 
 See the code for more details.
 
