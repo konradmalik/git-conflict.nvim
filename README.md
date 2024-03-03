@@ -14,9 +14,11 @@ Default config:
 ```lua
 require('git-conflict').setup({
     highlights = {
-        current = "diffAdded",
-        incoming = "diffChanged",
-        ancestor = "diffRemoved",
+        -- note that highlights need to have a bg
+        -- otherwise default color will be used
+        current = "DiffText",
+        incoming = "DiffAdd",
+        ancestor = "DiffChange",
     },
     labels = {
         current = "(Current Change)",
@@ -46,9 +48,9 @@ end
 
 gc.setup({
     highlights = {
-        current = "diffAdded",
-        incoming = "diffChanged",
-        ancestor = "diffDeleted",
+        current = "DiffText",
+        incoming = "DiffAdd",
+        ancestor = "DiffChange",
     },
 })
 

@@ -38,9 +38,9 @@ local DEFAULT_ANCESTOR_BG_COLOR = 6824314 -- #68217A
 
 local config = {
     highlights = {
-        current = "diffAdded",
-        incoming = "diffChanged",
-        ancestor = "diffRemoved",
+        current = "DiffText",
+        incoming = "DiffAdd",
+        ancestor = "DiffChange",
     },
     labels = {
         current = "(Current Change)",
@@ -49,13 +49,6 @@ local config = {
     },
     enable_diagnostics = true,
 }
-
----@param name string?
----@return table<string, any>
-local function get_hl(name)
-    if not name then return {} end
-    return vim.api.nvim_get_hl(NAMESPACE, { name = name })
-end
 
 ---Set an extmark for each section of the git conflict
 ---@param bufnr integer
@@ -171,11 +164,11 @@ end
 ---@param highlights ConflictHighlights
 local function set_highlights(highlights)
     local function inner_set(hls, default_bg, hl, label_hl)
-        local current_color = get_hl(hls)
-        local current_bg = current_color.background or default_bg
+        local current_color = vim.api.nvim_get_hl(0, { name = hls })
+        local current_bg = current_color.bg or default_bg
         local current_label_bg = color.shade_color(current_bg, 30)
-        vim.api.nvim_set_hl(0, hl, { background = current_bg, default = true })
-        vim.api.nvim_set_hl(0, label_hl, { background = current_label_bg, default = true })
+        vim.api.nvim_set_hl(0, hl, { bg = current_bg, default = true })
+        vim.api.nvim_set_hl(0, label_hl, { bg = current_label_bg, default = true })
     end
 
     inner_set(highlights.current, DEFAULT_CURRENT_BG_COLOR, CURRENT_HL, CURRENT_LABEL_HL)
