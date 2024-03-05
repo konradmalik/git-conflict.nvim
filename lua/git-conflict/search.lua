@@ -1,4 +1,3 @@
-local conflict_marker = require("git-conflict.conflicts").conflict_start
 local conflicts = {}
 local gather_stdout = function(_, data, _)
     for _, entry in ipairs(data) do
@@ -22,6 +21,8 @@ local stdout_to_qflist = function()
 end
 
 local start_conflicts_job = function()
+    conflicts = {}
+    local conflict_marker = require("git-conflict.conflicts").conflict_start
     return vim.fn.jobstart({
         "git",
         "--no-pager",

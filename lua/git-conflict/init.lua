@@ -1,4 +1,3 @@
-local color = require("git-conflict.colors")
 local conflicts = require("git-conflict.conflicts")
 
 --- @class ConflictHighlights
@@ -26,15 +25,6 @@ local ANCESTOR_LABEL_HL = "GitConflictAncestorLabel"
 local PRIORITY = vim.highlight.priorities.diagnostics - 1
 local NAME = "git-conflict"
 local NAMESPACE = vim.api.nvim_create_namespace(NAME)
-
-local conflict_start = conflicts.conflict_start
-local conflict_middle = conflicts.conflict_middle
-local conflict_end = conflicts.conflict_end
-local conflict_ancestor = conflicts.conflict_ancestor
-
-local DEFAULT_CURRENT_BG_COLOR = 4218238 -- #405d7e
-local DEFAULT_INCOMING_BG_COLOR = 3229523 -- #314753
-local DEFAULT_ANCESTOR_BG_COLOR = 6824314 -- #68217A
 
 local config = {
     highlights = {
@@ -119,7 +109,7 @@ local function detect_conflicts(lines)
     local position, has_start, has_middle, has_ancestor = {}, false, false, false
     for index, line in ipairs(lines) do
         local lnum = index - 1
-        if line:match(conflict_start) then
+        if line:match(conflicts.conflict_start) then
             has_start = true
             position = {
                 current = { range_start = lnum, content_start = lnum + 1 },
@@ -128,14 +118,14 @@ local function detect_conflicts(lines)
                 ancestor = {},
             }
         end
-        if has_start and line:match(conflict_ancestor) then
+        if has_start and line:match(conflicts.conflict_ancestor) then
             has_ancestor = true
             position.ancestor.range_start = lnum
             position.ancestor.content_start = lnum + 1
             position.current.range_end = lnum - 1
             position.current.content_end = lnum - 1
         end
-        if has_start and line:match(conflict_middle) then
+        if has_start and line:match(conflicts.conflict_middle) then
             has_middle = true
             if has_ancestor then
                 position.ancestor.content_end = lnum - 1
@@ -149,7 +139,7 @@ local function detect_conflicts(lines)
             position.incoming.range_start = lnum + 1
             position.incoming.content_start = lnum + 1
         end
-        if has_start and has_middle and line:match(conflict_end) then
+        if has_start and has_middle and line:match(conflicts.conflict_end) then
             position.incoming.range_end = lnum
             position.incoming.content_end = lnum - 1
             positions[#positions + 1] = position
@@ -163,6 +153,8 @@ end
 ---Derive the color of the section label highlights based on each sections highlights
 ---@param highlights ConflictHighlights
 local function set_highlights(highlights)
+    local color = require("git-conflict.colors")
+
     local function inner_set(hls, default_bg, hl, label_hl)
         local current_color = vim.api.nvim_get_hl(0, { name = hls })
         local current_bg = current_color.bg or default_bg
@@ -171,19 +163,22 @@ local function set_highlights(highlights)
         vim.api.nvim_set_hl(0, label_hl, { bg = current_label_bg, default = true })
     end
 
-    inner_set(highlights.current, DEFAULT_CURRENT_BG_COLOR, CURRENT_HL, CURRENT_LABEL_HL)
-    inner_set(highlights.incoming, DEFAULT_INCOMING_BG_COLOR, INCOMING_HL, INCOMING_LABEL_HL)
-    inner_set(highlights.ancestor, DEFAULT_ANCESTOR_BG_COLOR, ANCESTOR_HL, ANCESTOR_LABEL_HL)
+    local default_current_bg_color = 4218238 -- #405d7e
+    local default_incoming_bg_color = 3229523 -- #314753
+    local default_ancestor_bg_color = 6824314 -- #68217A
+
+    inner_set(highlights.current, default_current_bg_color, CURRENT_HL, CURRENT_LABEL_HL)
+    inner_set(highlights.incoming, default_incoming_bg_color, INCOMING_HL, INCOMING_LABEL_HL)
+    inner_set(highlights.ancestor, default_ancestor_bg_color, ANCESTOR_HL, ANCESTOR_LABEL_HL)
 end
 
----@param bufnr integer?
+---@param bufnr integer
 ---@return boolean
 local function buf_can_have_conflicts(bufnr)
-    bufnr = bufnr or 0
     local result = -1
     vim.api.nvim_buf_call(
         bufnr,
-        function() result = vim.fn.search(conflict_start, "cnw", nil, 500) end
+        function() result = vim.fn.search(conflicts.conflict_start, "cnw", nil, 500) end
     )
     return result > 0
 end

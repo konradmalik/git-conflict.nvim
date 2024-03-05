@@ -1,5 +1,4 @@
 local gc = require("git-conflict")
-local search = require("git-conflict.search")
 local conflict_marker = require("git-conflict.conflicts").conflict_start
 
 ---@param bufnr integer
@@ -91,7 +90,10 @@ M.buf_next_conflict = function() vim.fn.search(conflict_marker, "w") end
 M.buf_prev_conflict = function() vim.fn.search(conflict_marker, "bw") end
 
 ---send all conflicts in the repo to QF list
-M.send_conflicts_to_qf = search.setqflist
+M.send_conflicts_to_qf = function()
+    local search = require("git-conflict.search")
+    search.setqflist()
+end
 
 ---Choose ours (current/HEAD/LOCAL)
 ---@param bufnr integer?
