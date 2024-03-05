@@ -153,14 +153,11 @@ end
 ---Derive the color of the section label highlights based on each sections highlights
 ---@param highlights ConflictHighlights
 local function set_highlights(highlights)
-    local color = require("git-conflict.colors")
-
     local function inner_set(hls, default_bg, hl, label_hl)
         local current_color = vim.api.nvim_get_hl(0, { name = hls })
         local current_bg = current_color.bg or default_bg
-        local current_label_bg = color.shade_color(current_bg, 30) or current_bg
         vim.api.nvim_set_hl(0, hl, { bg = current_bg, default = true })
-        vim.api.nvim_set_hl(0, label_hl, { bg = current_label_bg, default = true })
+        vim.api.nvim_set_hl(0, label_hl, { bg = current_bg, bold = true, default = true })
     end
 
     local default_current_bg_color = 4218238 -- #405d7e
