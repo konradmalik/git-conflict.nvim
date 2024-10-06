@@ -1,5 +1,5 @@
 local gc = require("git-conflict")
-local conflict_marker = require("git-conflict.conflicts").conflict_start
+local conflict_marker = require("git-conflict.shared").conflict_start
 
 ---@param bufnr integer
 ---@param position ConflictPosition

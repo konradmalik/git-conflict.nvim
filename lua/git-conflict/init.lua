@@ -1,4 +1,4 @@
-local conflicts = require("git-conflict.conflicts")
+local shared = require("git-conflict.shared")
 
 --- @class ConflictHighlights
 --- @field current string
@@ -109,7 +109,7 @@ local function detect_conflicts(lines)
     local position, has_start, has_middle, has_ancestor = {}, false, false, false
     for index, line in ipairs(lines) do
         local lnum = index - 1
-        if line:match(conflicts.conflict_start) then
+        if line:match(shared.conflict_start) then
             has_start = true
             position = {
                 current = { range_start = lnum, content_start = lnum + 1 },
@@ -118,14 +118,14 @@ local function detect_conflicts(lines)
                 ancestor = {},
             }
         end
-        if has_start and line:match(conflicts.conflict_ancestor) then
+        if has_start and line:match(shared.conflict_ancestor) then
             has_ancestor = true
             position.ancestor.range_start = lnum
             position.ancestor.content_start = lnum + 1
             position.current.range_end = lnum - 1
             position.current.content_end = lnum - 1
         end
-        if has_start and line:match(conflicts.conflict_middle) then
+        if has_start and line:match(shared.conflict_middle) then
             has_middle = true
             if has_ancestor then
                 position.ancestor.content_end = lnum - 1
@@ -139,7 +139,7 @@ local function detect_conflicts(lines)
             position.incoming.range_start = lnum + 1
             position.incoming.content_start = lnum + 1
         end
-        if has_start and has_middle and line:match(conflicts.conflict_end) then
+        if has_start and has_middle and line:match(shared.conflict_end) then
             position.incoming.range_end = lnum
             position.incoming.content_end = lnum - 1
             positions[#positions + 1] = position
@@ -175,7 +175,7 @@ local function buf_can_have_conflicts(bufnr)
     local result = -1
     vim.api.nvim_buf_call(
         bufnr,
-        function() result = vim.fn.search(conflicts.conflict_start, "cnw", nil, 500) end
+        function() result = vim.fn.search(shared.conflict_start, "cnw", nil, 500) end
     )
     return result > 0
 end
