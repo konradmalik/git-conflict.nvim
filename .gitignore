@@ -1,2 +1,4 @@
 git-repo/
 conflict-test/
+.direnv
+result
