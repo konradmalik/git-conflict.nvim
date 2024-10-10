@@ -10,6 +10,8 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     neorocks.url = "github:nvim-neorocks/neorocks";
+    neovim-nightly-overlay.url = "github:nix-community/neovim-nightly-overlay";
+    gen-luarc.url = "github:mrcjkb/nix-gen-luarc-json";
   };
 
   outputs =
@@ -17,6 +19,8 @@
       nixpkgs,
       flake-parts,
       neorocks,
+      neovim-nightly-overlay,
+      gen-luarc,
       ...
     }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
@@ -33,15 +37,21 @@
             inherit system;
             overlays = [
               neorocks.overlays.default
+              gen-luarc.overlays.default
             ];
           };
         in
         {
           devShells.default = pkgs.mkShell {
+            shellHook = ''
+              ln -fs ${
+                pkgs.mk-luarc-json { nvim = neovim-nightly-overlay.packages.${system}.default; }
+              } .luarc.json
+            '';
             packages = with pkgs; [
               gnumake
               busted-nlua
-              lua.pkgs.luacheck
+              luajitPackages.luacheck
               stylua
             ];
           };
