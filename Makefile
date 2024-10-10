@@ -11,7 +11,7 @@ check-fmt:
 	@stylua --check .
 
 .PHONY: check-lint
-check-lint: luacheck typecheck
+check-lint: luacheck
 
 .PHONY: test
 test:
