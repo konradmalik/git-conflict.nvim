@@ -92,7 +92,7 @@ M.buf_prev_conflict = function() vim.fn.search(conflict_marker, "bw") end
 ---send all conflicts in the repo to QF list
 M.send_conflicts_to_qf = function()
     local search = require("git-conflict.search")
-    search.setqflist()
+    search.setqflist(0)
 end
 
 ---Choose ours (current/HEAD/LOCAL)

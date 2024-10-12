@@ -1,11 +1,5 @@
-local conflicts = {}
-local gather_stdout = function(_, data, _)
-    for _, entry in ipairs(data) do
-        if entry and entry ~= "" then table.insert(conflicts, entry) end
-    end
-end
-
-local stdout_to_qflist = function()
+---@param conflicts string[]
+local stdout_to_qflist = function(conflicts)
     local qf_entries = {}
     for _, conflict in ipairs(conflicts) do
         local filename, line = conflict:match("(.+):(%d+):")
@@ -20,10 +14,11 @@ local stdout_to_qflist = function()
     vim.cmd("copen")
 end
 
-local start_conflicts_job = function()
-    conflicts = {}
-    local conflict_marker = require("git-conflict.conflicts").conflict_start
-    return vim.fn.jobstart({
+---@param bufnr integer
+local start_conflicts_job = function(bufnr)
+    local conflict_marker = require("git-conflict.shared").conflict_start
+    local git_root = vim.fs.root(bufnr, ".git")
+    local obj = vim.system({
         "git",
         "--no-pager",
         "grep",
@@ -32,9 +27,12 @@ local start_conflicts_job = function()
         "--line-number",
         conflict_marker,
     }, {
-        on_stdout = gather_stdout,
-        on_exit = stdout_to_qflist,
-    })
+        text = true,
+        cwd = git_root,
+    }):wait()
+    if not obj.stdout then return end
+    local outlines = vim.fn.split(obj.stdout, "\n")
+    stdout_to_qflist(outlines)
 end
 
 return {
