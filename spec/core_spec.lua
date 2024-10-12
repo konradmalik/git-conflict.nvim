@@ -1,25 +1,12 @@
 local gc = require("git-conflict")
-
----@return integer
-local function create_buf_with_conflict()
-    local bufnr = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_buf_set_lines(bufnr, 0, 0, false, {
-        "<<<<<<<",
-        "current",
-        "|||||||",
-        "ancestor",
-        "=======",
-        "incoming",
-        ">>>>>>>",
-    })
-    return bufnr
-end
+local utils = require("test.utils")
 
 describe("in buffer with conflicts", function()
-    it("populates positions after refresh", function()
-        -- arrange
-        local bufnr = create_buf_with_conflict()
+    local bufnr
+    before_each(function() bufnr = utils.create_buf_with_conflict() end)
+    after_each(function() utils.close_buffers_except_initial() end)
 
+    it("populates positions after refresh", function()
         -- act
         gc.refresh(bufnr)
 
@@ -51,5 +38,36 @@ describe("in buffer with conflicts", function()
                 },
             },
         }, actual_positons)
+    end)
+
+    it("populates diagnostics after refresh", function()
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        local actual_diagnostics = vim.diagnostic.get(bufnr)
+        assert.are.same({
+            {
+                ["bufnr"] = 3,
+                ["col"] = 0,
+                ["end_col"] = 0,
+                ["end_lnum"] = 6,
+                ["lnum"] = 0,
+                ["message"] = "Git conflict",
+                ["namespace"] = 2,
+                ["severity"] = 1,
+                ["source"] = "git-conflict",
+            },
+        }, actual_diagnostics)
+    end)
+
+    it("does clear diagnostics", function()
+        -- act
+        gc.refresh(bufnr)
+        gc.clear(bufnr)
+
+        -- assert
+        local actual_diagnostics = vim.diagnostic.get(bufnr)
+        assert.are.same({}, actual_diagnostics)
     end)
 end)

@@ -1,11 +1,13 @@
 #!/usr/bin/env sh
 
+set -e
+
 [ -d ./conflict-test/ ] && rm -rf ./conflict-test/
 
 mkdir conflict-test
-cd conflict-test || exit
+cd conflict-test || exit 1
 
-git init
+git init --initial-branch main
 git config user.email "you@example.com"
 git config user.name "Your Name"
 git config commit.gpgsign false
@@ -38,4 +40,8 @@ print(string.format("value is %d", value))
 EOF
 git commit -am 'second commit on main'
 
+set +e
 git merge new_branch
+set -e
+
+exit 0
