@@ -4,8 +4,8 @@ My refactored, simplified and in some cases extended version of [git-conflict](h
 
 Main aim:
 
-- simple, very lightweight and maintainable by me
-- more of a library that a typical plugin
+-   simple, very lightweight and maintainable by me
+-   more of a library that a typical plugin
 
 ## TL;DR
 
@@ -30,7 +30,7 @@ require('git-conflict').setup({
 
 ```
 
-This plugin defined a `GitConflict` `User` event that is triggered on every `M.refresh(bufnr)` that detected any conflicts.
+This plugin defines a `GitConflict` `User` event that is triggered on every `M.refresh(bufnr)` that detected any conflicts.
 
 It's useful to define other buffer-specific commands, autocommands or keymaps based on that event.
 
@@ -106,13 +106,13 @@ vim.api.nvim_create_autocmd("User", {
 
 ## Notable features:
 
-- you decide when and how you use this plugin
-- publishes `GitConflict` `User` autocommand for easy integration
-- creates diagnostics for conflicts
-- commands (see `commands.lua`)
-  - jump to prev/next conflict
-  - choose ours/theirs/both versions
-  - send conflicts in current repo to a QF list
+-   you decide when and how you use this plugin
+-   publishes `GitConflict` `User` autocommand for easy integration
+-   creates diagnostics for conflicts
+-   commands (see `commands.lua`)
+    -   jump to prev/next conflict
+    -   choose ours/theirs/both versions
+    -   send conflicts in current repo to a QF list
 
 See the code for more details.
 
