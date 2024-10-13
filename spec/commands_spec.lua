@@ -2,13 +2,23 @@ local cmds = require("git-conflict.commands")
 local gc = require("git-conflict")
 local utils = require("test.utils")
 
+---@param bufnr integer
+local function assert_cleared_highlights(bufnr)
+    local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
+    local exts = vim.api.nvim_buf_get_extmarks(bufnr, nsid, { 4, 0 }, { 4, 0 }, {})
+    assert.are.same(0, #exts)
+end
+
+---@param bufnr integer
+local function assert_cleared_diagnostics(bufnr) assert.are.same({}, vim.diagnostic.get(bufnr)) end
+
 describe("in buffer with conflicts", function()
     local winnr
     local bufnr
     before_each(function()
         bufnr = utils.create_buf_with_conflict()
-        gc.refresh(bufnr)
         winnr = utils.create_win_with_bufnr(bufnr)
+        gc.refresh(bufnr)
     end)
     after_each(function()
         vim.api.nvim_win_close(winnr, true)
@@ -31,6 +41,8 @@ describe("in buffer with conflicts", function()
             "current",
             "",
         }, actual_content)
+        assert_cleared_diagnostics(bufnr)
+        assert_cleared_highlights(bufnr)
     end)
 
     it("chooses incoming option", function()
@@ -49,6 +61,8 @@ describe("in buffer with conflicts", function()
             "incoming",
             "",
         }, actual_content)
+        assert_cleared_diagnostics(bufnr)
+        assert_cleared_highlights(bufnr)
     end)
 
     it("chooses both options", function()
@@ -68,6 +82,8 @@ describe("in buffer with conflicts", function()
             "incoming",
             "",
         }, actual_content)
+        assert_cleared_diagnostics(bufnr)
+        assert_cleared_highlights(bufnr)
     end)
 
     it("chooses no options", function()
@@ -85,6 +101,8 @@ describe("in buffer with conflicts", function()
             "",
             "",
         }, actual_content)
+        assert_cleared_diagnostics(bufnr)
+        assert_cleared_highlights(bufnr)
     end)
 
     it("moves to prev conflict", function()
