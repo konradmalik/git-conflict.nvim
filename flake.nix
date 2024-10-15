@@ -43,6 +43,26 @@
           };
         in
         {
+          packages =
+            let
+              fs = pkgs.lib.fileset;
+              sourceFiles = fs.unions [
+                ./lua
+              ];
+              git-conflict-nvim = pkgs.vimUtils.buildVimPlugin {
+                src = fs.toSource {
+                  root = ./.;
+                  fileset = sourceFiles;
+                };
+                pname = "git-conflict-nvim";
+                version = "latest";
+                nvimRequireCheck = "git-conflict";
+              };
+            in
+            {
+              inherit git-conflict-nvim;
+              default = git-conflict-nvim;
+            };
           devShells.default = pkgs.mkShell {
             shellHook =
               let
