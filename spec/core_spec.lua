@@ -73,7 +73,7 @@ describe("in buffer with conflicts", function()
                 ["end_lnum"] = 9,
                 ["lnum"] = 3,
                 ["message"] = "Git conflict",
-                ["namespace"] = 2,
+                ["namespace"] = 3,
                 ["severity"] = 1,
                 ["source"] = "git-conflict",
             },
