@@ -22,7 +22,7 @@ local ANCESTOR_HL = "GitConflictAncestor"
 local CURRENT_LABEL_HL = "GitConflictCurrentLabel"
 local INCOMING_LABEL_HL = "GitConflictIncomingLabel"
 local ANCESTOR_LABEL_HL = "GitConflictAncestorLabel"
-local PRIORITY = vim.highlight.priorities.diagnostics - 1
+local PRIORITY = vim.hl.priorities.diagnostics - 1
 local NAME = "git-conflict"
 local NAMESPACE = vim.api.nvim_create_namespace(NAME)
 
