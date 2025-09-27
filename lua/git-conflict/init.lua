@@ -142,8 +142,8 @@ local function detect_conflicts(lines)
         if has_start and has_middle and line:match(shared.conflict_end) then
             position.incoming.range_end = lnum
             position.incoming.content_end = lnum - 1
-            positions[#positions + 1] = position
 
+            positions[#positions + 1] = position
             position, has_start, has_middle, has_ancestor = {}, false, false, false
         end
     end
