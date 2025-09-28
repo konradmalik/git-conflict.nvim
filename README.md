@@ -4,8 +4,8 @@ My refactored, simplified and in some cases extended version of [git-conflict](h
 
 Main aim:
 
--   simple, very lightweight and maintainable by me
--   more of a library that a typical plugin
+- simple, very lightweight and maintainable by me
+- full control when and how it's executed
 
 ## TL;DR
 
@@ -38,7 +38,6 @@ Exemplary usage in my Neovim configuration:
 
 ```lua
 local cmd = require("git-conflict.commands")
-local gc = require("git-conflict")
 local opts_with_desc = function(desc) return { desc = "[GitConflict] " .. desc } end
 local function buf_opts_with_desc(bufnr, desc)
     local opts = opts_with_desc(desc)
@@ -46,17 +45,7 @@ local function buf_opts_with_desc(bufnr, desc)
     return opts
 end
 
-gc.setup()
-
-local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
-
-vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-    group = group,
-    callback = function(args)
-        local buf = args.buf
-        gc.refresh(buf)
-    end,
-})
+require("git-conflict").setup()
 
 vim.keymap.set("n", "]x", cmd.buf_next_conflict, opts_with_desc("Next Conflict"))
 vim.keymap.set("n", "[x", cmd.buf_prev_conflict, opts_with_desc("Previous Conflict"))
@@ -68,7 +57,7 @@ vim.keymap.set(
 )
 
 vim.api.nvim_create_autocmd("User", {
-    group = group,
+    group = vim.api.nvim_create_augroup("GitConflictUser", { clear = true })
     pattern = "GitConflict",
     callback = function(args)
         local buf = args.buf
@@ -106,13 +95,12 @@ vim.api.nvim_create_autocmd("User", {
 
 ## Notable features:
 
--   you decide when and how you use this plugin
--   publishes `GitConflict` `User` autocommand for easy integration
--   creates diagnostics for conflicts
--   commands (see `commands.lua`)
-    -   jump to prev/next conflict
-    -   choose ours/theirs/both versions
-    -   send conflicts in current repo to a QF list
+- publishes `GitConflict` `User` autocommand for easy integration
+- creates diagnostics for conflicts
+- commands (see `commands.lua`)
+    - jump to prev/next conflict
+    - choose ours/theirs/both versions
+    - send conflicts in current repo to a QF list
 
 See the code for more details.
 

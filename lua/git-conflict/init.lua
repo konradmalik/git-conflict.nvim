@@ -38,6 +38,7 @@ local config = {
         ancestor = "(Base Change)",
     },
     enable_diagnostics = true,
+    refresh_events = { "BufReadPost", "BufWritePost" },
 }
 
 ---Set an extmark for each section of the git conflict
@@ -267,8 +268,16 @@ function M.setup(user_config)
 
     set_highlights(config.highlights)
 
+    local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
+    vim.api.nvim_create_autocmd(config.refresh_events, {
+        group = group,
+        callback = function(args)
+            local buf = args.buf
+            M.refresh(buf)
+        end,
+    })
     vim.api.nvim_create_autocmd("ColorScheme", {
-        group = vim.api.nvim_create_augroup("GitConflictHighlights", { clear = true }),
+        group = group,
         callback = function() set_highlights(config.highlights) end,
     })
 end
