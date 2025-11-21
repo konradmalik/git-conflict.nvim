@@ -9,70 +9,75 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-
   outputs =
     {
       nixpkgs,
-      flake-parts,
       gen-luarc,
       ...
-    }@inputs:
-    flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-      perSystem =
-        { system, ... }:
+    }:
+    let
+      nixpkgsFor =
+        system:
+        (import nixpkgs {
+          inherit system;
+          overlays = [
+            gen-luarc.overlays.default
+          ];
+        });
+
+      forAllSystems =
+        function:
+        nixpkgs.lib.genAttrs [
+          "x86_64-linux"
+          "aarch64-linux"
+          "x86_64-darwin"
+          "aarch64-darwin"
+        ] (system: function (nixpkgsFor system));
+    in
+    {
+      packages = forAllSystems (
+        pkgs:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              gen-luarc.overlays.default
-            ];
+          fs = pkgs.lib.fileset;
+          sourceFiles = fs.unions [
+            ./lua
+          ];
+          git-conflict-nvim = pkgs.vimUtils.buildVimPlugin {
+            src = fs.toSource {
+              root = ./.;
+              fileset = sourceFiles;
+            };
+            pname = "git-conflict-nvim";
+            version = "latest";
+            nvimRequireCheck = "git-conflict";
           };
         in
         {
-          packages =
+          inherit git-conflict-nvim;
+          default = git-conflict-nvim;
+        }
+      );
+
+      devShells = forAllSystems (pkgs: {
+        default = pkgs.mkShell {
+          shellHook =
             let
-              fs = pkgs.lib.fileset;
-              sourceFiles = fs.unions [
-                ./lua
-              ];
-              git-conflict-nvim = pkgs.vimUtils.buildVimPlugin {
-                src = fs.toSource {
-                  root = ./.;
-                  fileset = sourceFiles;
-                };
-                pname = "git-conflict-nvim";
-                version = "latest";
-                nvimRequireCheck = "git-conflict";
-              };
+              luarc = pkgs.mk-luarc-json { };
             in
-            {
-              inherit git-conflict-nvim;
-              default = git-conflict-nvim;
-            };
-          devShells.default = pkgs.mkShell {
-            shellHook =
-              let
-                luarc = pkgs.mk-luarc-json { };
-              in
-              # bash
-              ''
-                ln -fs ${luarc} .luarc.json
-              '';
-            packages = with pkgs; [
-              gnumake
-              luajitPackages.busted
-              luajitPackages.luacheck
-              luajitPackages.nlua
-              stylua
-            ];
-          };
-          formatter = pkgs.nixfmt-rfc-style;
+            # bash
+            ''
+              ln -fs ${luarc} .luarc.json
+            '';
+          packages = with pkgs; [
+            gnumake
+            luajitPackages.busted
+            luajitPackages.luacheck
+            luajitPackages.nlua
+            stylua
+          ];
         };
+      });
+
+      formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
     };
 }
