@@ -50,6 +50,7 @@
             pname = "git-conflict-nvim";
             version = "latest";
             nvimRequireCheck = "git-conflict";
+            runtimeDeps = [ pkgs.git ];
           };
         in
         {
