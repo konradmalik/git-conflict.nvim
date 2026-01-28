@@ -3,3 +3,4 @@ conflict-test/
 .direnv
 result
 .luarc.json
+.envrc
