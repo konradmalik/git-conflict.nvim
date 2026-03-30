@@ -261,25 +261,10 @@ function M.set_highlights()
     inner_set(highlights.ancestor, default_ancestor_bg_color, ANCESTOR_HL, ANCESTOR_LABEL_HL)
 end
 
----Call once to setup the plugin
+---Call needed only if changing the config
 function M.setup(user_config)
     config = vim.tbl_deep_extend("force", config, user_config or {})
-
     M.set_highlights()
-
-    local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
-    vim.api.nvim_create_autocmd("ColorScheme", {
-        group = group,
-        callback = function() M.set_highlights() end,
-    })
-
-    vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
-        group = group,
-        callback = function(args)
-            local buf = args.buf
-            M.refresh(buf)
-        end,
-    })
 end
 
 return M
