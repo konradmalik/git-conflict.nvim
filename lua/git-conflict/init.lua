@@ -231,7 +231,7 @@ local M = {}
 
 ---Clears all conflict highlights and diagnostics
 ---@param bufnr integer?
-M.clear = function(bufnr)
+function M.clear(bufnr)
     bufnr = bufnr or 0
     if not vim.api.nvim_buf_is_valid(bufnr) then return end
     clear_highlights(bufnr)
@@ -269,16 +269,17 @@ function M.setup(user_config)
     set_highlights(config.highlights)
 
     local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
+    vim.api.nvim_create_autocmd("ColorScheme", {
+        group = group,
+        callback = function() set_highlights(config.highlights) end,
+    })
+
     vim.api.nvim_create_autocmd(config.refresh_events, {
         group = group,
         callback = function(args)
             local buf = args.buf
             M.refresh(buf)
         end,
-    })
-    vim.api.nvim_create_autocmd("ColorScheme", {
-        group = group,
-        callback = function() set_highlights(config.highlights) end,
     })
 end
 
