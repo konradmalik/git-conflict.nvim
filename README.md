@@ -26,7 +26,6 @@ require('git-conflict').setup({
         ancestor = "(Base Change)",
     },
     enable_diagnostics = true,
-    refresh_events = { "BufReadPost", "BufWritePost" },
 })
 
 ```

@@ -38,7 +38,6 @@ local config = {
         ancestor = "(Base Change)",
     },
     enable_diagnostics = true,
-    refresh_events = { "BufReadPost", "BufWritePost" },
 }
 
 ---Set an extmark for each section of the git conflict
@@ -151,25 +150,6 @@ local function detect_conflicts(lines)
     return #positions > 0, positions
 end
 
----Derive the color of the section label highlights based on each sections highlights
----@param highlights ConflictHighlights
-local function set_highlights(highlights)
-    local function inner_set(hls, default_bg, hl, label_hl)
-        local current_color = vim.api.nvim_get_hl(0, { name = hls })
-        local current_bg = current_color.bg or default_bg
-        vim.api.nvim_set_hl(0, hl, { bg = current_bg, default = true })
-        vim.api.nvim_set_hl(0, label_hl, { bg = current_bg, bold = true, default = true })
-    end
-
-    local default_current_bg_color = 4218238 -- #405d7e
-    local default_incoming_bg_color = 3229523 -- #314753
-    local default_ancestor_bg_color = 6824314 -- #68217A
-
-    inner_set(highlights.current, default_current_bg_color, CURRENT_HL, CURRENT_LABEL_HL)
-    inner_set(highlights.incoming, default_incoming_bg_color, INCOMING_HL, INCOMING_LABEL_HL)
-    inner_set(highlights.ancestor, default_ancestor_bg_color, ANCESTOR_HL, ANCESTOR_LABEL_HL)
-end
-
 ---@param bufnr integer
 ---@return boolean
 local function buf_can_have_conflicts(bufnr)
@@ -262,19 +242,38 @@ end
 ---@return ConflictPosition[]
 function M.positions(bufnr) return buf_conflicts[bufnr] end
 
+---Sets highlights and their colors based on config
+function M.set_highlights()
+    local highlights = config.highlights
+    local function inner_set(hls, default_bg, hl, label_hl)
+        local current_color = vim.api.nvim_get_hl(0, { name = hls })
+        local current_bg = current_color.bg or default_bg
+        vim.api.nvim_set_hl(0, hl, { bg = current_bg, default = true })
+        vim.api.nvim_set_hl(0, label_hl, { bg = current_bg, bold = true, default = true })
+    end
+
+    local default_current_bg_color = 4218238 -- #405d7e
+    local default_incoming_bg_color = 3229523 -- #314753
+    local default_ancestor_bg_color = 6824314 -- #68217A
+
+    inner_set(highlights.current, default_current_bg_color, CURRENT_HL, CURRENT_LABEL_HL)
+    inner_set(highlights.incoming, default_incoming_bg_color, INCOMING_HL, INCOMING_LABEL_HL)
+    inner_set(highlights.ancestor, default_ancestor_bg_color, ANCESTOR_HL, ANCESTOR_LABEL_HL)
+end
+
 ---Call once to setup the plugin
 function M.setup(user_config)
     config = vim.tbl_deep_extend("force", config, user_config or {})
 
-    set_highlights(config.highlights)
+    M.set_highlights()
 
     local group = vim.api.nvim_create_augroup("GitConflict", { clear = true })
     vim.api.nvim_create_autocmd("ColorScheme", {
         group = group,
-        callback = function() set_highlights(config.highlights) end,
+        callback = function() M.set_highlights() end,
     })
 
-    vim.api.nvim_create_autocmd(config.refresh_events, {
+    vim.api.nvim_create_autocmd({ "BufReadPost", "BufWritePost" }, {
         group = group,
         callback = function(args)
             local buf = args.buf
