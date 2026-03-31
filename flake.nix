@@ -41,6 +41,7 @@
           fs = pkgs.lib.fileset;
           sourceFiles = fs.unions [
             ./lua
+            ./plugin
           ];
           git-conflict-nvim = pkgs.vimUtils.buildVimPlugin {
             src = fs.toSource {
