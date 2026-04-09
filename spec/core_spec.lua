@@ -67,13 +67,14 @@ describe("in buffer with conflicts", function()
         local actual_diagnostics = vim.diagnostic.get(bufnr)
         assert.are.same({
             {
+                ["_extmark_id"] = 1,
                 ["bufnr"] = bufnr,
                 ["col"] = 0,
                 ["end_col"] = 0,
                 ["end_lnum"] = 9,
                 ["lnum"] = 3,
                 ["message"] = "Git conflict",
-                ["namespace"] = 3,
+                ["namespace"] = 4,
                 ["severity"] = 1,
                 ["source"] = "git-conflict",
             },
