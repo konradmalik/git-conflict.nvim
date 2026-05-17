@@ -64,17 +64,20 @@ describe("in buffer with conflicts", function()
         gc.refresh(bufnr)
 
         -- assert
+        local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
         local actual_diagnostics = vim.diagnostic.get(bufnr)
+        for _, d in ipairs(actual_diagnostics) do
+            d._extmark_id = nil
+        end
         assert.are.same({
             {
-                ["_extmark_id"] = 1,
                 ["bufnr"] = bufnr,
                 ["col"] = 0,
                 ["end_col"] = 0,
                 ["end_lnum"] = 9,
                 ["lnum"] = 3,
                 ["message"] = "Git conflict",
-                ["namespace"] = 4,
+                ["namespace"] = nsid,
                 ["severity"] = 1,
                 ["source"] = "git-conflict",
             },

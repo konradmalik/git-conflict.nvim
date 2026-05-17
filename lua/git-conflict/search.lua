@@ -1,11 +1,12 @@
 ---@param conflicts string[]
 local stdout_to_qflist = function(conflicts)
+    ---@type vim.quickfix.entry[]
     local qf_entries = {}
     for _, conflict in ipairs(conflicts) do
         local filename, line = conflict:match("(.+):(%d+):")
         table.insert(qf_entries, {
             filename = filename,
-            lnum = line,
+            lnum = tonumber(line),
             text = "Conflict marker",
             type = "E",
         })
@@ -16,7 +17,7 @@ end
 
 ---@param bufnr integer
 local start_conflicts_job = function(bufnr)
-    local conflict_marker = require("git-conflict.shared").conflict_start
+    local conflict_marker = require("git-conflict.markers").conflict_start
     local git_root = vim.fs.root(bufnr, ".git")
     local obj = vim.system({
         "git",
