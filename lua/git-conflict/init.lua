@@ -175,7 +175,7 @@ local function set_diagnostics(bufnr, positions)
             lnum = position.current.range_start,
             end_lnum = position.incoming.range_end,
             col = 0,
-            severity = vim.diagnostic.severity.E,
+            severity = vim.diagnostic.severity.ERROR,
             message = "Git conflict",
             source = NAME,
         })
