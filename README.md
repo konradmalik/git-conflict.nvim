@@ -138,3 +138,17 @@ See the code for more details.
 
 Notably the module returned in `init.lua` should be self-explanatory.
 Useful functions can be imported and used via `require("git-conflict.commands")`.
+
+## Development
+
+Enter the devshell with `nix develop` (or direnv, see `.envrc`). It links a generated `.luarc.json` for
+lua-language-server.
+
+```bash
+$ nix fmt
+$ nix flake check
+```
+
+`nix fmt` formats everything through treefmt (`treefmt.nix`). `nix flake check` covers formatting, shellcheck,
+luacheck, and the tests (busted using nvim as an interpreter). In the devshell, `busted --lua=nlua` runs the tests
+directly.
