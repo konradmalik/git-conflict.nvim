@@ -105,6 +105,44 @@ describe("in buffer with conflicts", function()
         assert_cleared_highlights(bufnr)
     end)
 
+    it("chooses current version after unsaved edits above the conflict", function()
+        -- arrange
+        vim.api.nvim_buf_set_lines(bufnr, 0, 0, true, { "added line" })
+        vim.api.nvim_win_set_cursor(winnr, { 6, 2 })
+
+        -- act
+        cmds.buf_conflict_choose_current(bufnr)
+
+        -- assert
+        local actual_content = utils.get_buf_lines(bufnr)
+        assert.are.same({
+            "added line",
+            "the conflict",
+            "is below",
+            "",
+            "current",
+            "",
+        }, actual_content)
+        assert_cleared_diagnostics(bufnr)
+    end)
+
+    it("does not publish GitConflict event when resolving the last conflict", function()
+        -- arrange
+        utils.move_cursor_to_conflict(winnr)
+        local events = 0
+        local autocmd = vim.api.nvim_create_autocmd("User", {
+            pattern = "GitConflict",
+            callback = function() events = events + 1 end,
+        })
+        finally(function() vim.api.nvim_del_autocmd(autocmd) end)
+
+        -- act
+        cmds.buf_conflict_choose_current(bufnr)
+
+        -- assert
+        assert.are.same(0, events)
+    end)
+
     it("moves to prev conflict", function()
         -- arrange
         utils.move_cursor_to_conflict(winnr)

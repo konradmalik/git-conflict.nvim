@@ -1,10 +1,11 @@
----@param conflicts string[]
+---@param conflicts string[] git grep output lines
 ---@param root string repo root used to resolve repo-relative filenames
-local stdout_to_qflist = function(conflicts, root)
+---@return vim.quickfix.entry[]
+local to_qf_items = function(conflicts, root)
     ---@type vim.quickfix.entry[]
     local qf_entries = {}
     for _, conflict in ipairs(conflicts) do
-        local filename, line = conflict:match("(.+):(%d+):")
+        local filename, line = conflict:match("^(.-):(%d+):")
         table.insert(qf_entries, {
             filename = vim.fs.joinpath(root, filename),
             lnum = tonumber(line),
@@ -12,7 +13,13 @@ local stdout_to_qflist = function(conflicts, root)
             type = "E",
         })
     end
-    vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = qf_entries })
+    return qf_entries
+end
+
+---@param conflicts string[]
+---@param root string repo root used to resolve repo-relative filenames
+local stdout_to_qflist = function(conflicts, root)
+    vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = to_qf_items(conflicts, root) })
     vim.cmd("copen")
 end
 
@@ -43,4 +50,5 @@ end
 
 return {
     setqflist = start_conflicts_job,
+    to_qf_items = to_qf_items,
 }
