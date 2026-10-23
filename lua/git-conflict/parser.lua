@@ -2,7 +2,7 @@ local markers = require("git-conflict.markers")
 
 --- @class ConflictPosition
 --- @field incoming Range
---- @field middle Range
+--- @field middle {range_start: integer, range_end: integer}
 --- @field current Range
 --- @field ancestor Range?
 
@@ -13,7 +13,7 @@ local markers = require("git-conflict.markers")
 --- @field content_end integer
 
 ---@param section Range
----@param lnum integer line number BEFORE the marker that ends this section
+---@param lnum integer line of the marker that ends this section
 local function finish_range(section, lnum)
     section.range_end = lnum - 1
     section.content_end = lnum - 1
@@ -33,7 +33,7 @@ local function detect_conflicts(lines, offset)
         if line:match(markers.conflict_start) then
             position = { current = { range_start = lnum, content_start = lnum + 1 } }
         elseif position and not position.middle then
-            if line:match(markers.conflict_ancestor) then
+            if not position.ancestor and line:match(markers.conflict_ancestor) then
                 finish_range(position.current, lnum)
                 position.ancestor = { range_start = lnum, content_start = lnum + 1 }
             elseif line:match(markers.conflict_middle) then

@@ -20,6 +20,9 @@ touch conflicted2.lua
 git add conflicted2.lua
 echo "local value = 2 + 2" >conflicted2.lua
 
+printf '<<<<<<< \0binary\n' >binary.bin
+git add binary.bin
+
 git commit -am 'initial'
 
 git checkout -b new_branch
