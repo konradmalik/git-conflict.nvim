@@ -43,6 +43,28 @@ describe("parser", function()
         }, actual_positions)
     end)
 
+    it("treats a second ancestor marker as ancestor content", function()
+        -- act
+        local actual_positions = parser.detect_conflicts({
+            "<<<<<<< HEAD",
+            "current",
+            "||||||| base",
+            "|||||||",
+            "=======",
+            ">>>>>>> branch",
+        })
+
+        -- assert
+        assert.are.same({
+            {
+                current = { range_start = 0, range_end = 1, content_start = 1, content_end = 1 },
+                ancestor = { range_start = 2, range_end = 3, content_start = 3, content_end = 3 },
+                middle = { range_start = 4, range_end = 4 },
+                incoming = { range_start = 5, range_end = 5, content_start = 5, content_end = 4 },
+            },
+        }, actual_positions)
+    end)
+
     it("treats an ancestor marker after the middle marker as incoming content", function()
         -- act
         local actual_positions = parser.detect_conflicts({

@@ -31,6 +31,7 @@ local setqflist = function(bufnr)
             "--no-pager",
             "grep",
             "--no-color",
+            "-I", -- skip binary files, they print no line numbers
             "--full-name",
             "--line-number",
             conflict_marker,

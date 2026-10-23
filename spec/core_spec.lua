@@ -163,6 +163,25 @@ describe("in buffer with conflicts", function()
         assert_extmarks(bufnr, nsid, 1, "GitConflictIncoming", 8)
         assert_extmarks(bufnr, nsid, 1, "GitConflictIncomingLabel", 9)
     end)
+
+    it("draws section labels", function()
+        -- arrange
+        local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
+
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        local actual_labels = {}
+        for _, ext in ipairs(vim.api.nvim_buf_get_extmarks(bufnr, nsid, 0, -1, { details = true })) do
+            if ext[4].virt_text then actual_labels[ext[2]] = ext[4].virt_text[1][1] end
+        end
+        assert.are.same({
+            [3] = "(Current Change)",
+            [5] = "(Base Change)",
+            [9] = "(Incoming Change)",
+        }, actual_labels)
+    end)
 end)
 
 describe("setup", function()
