@@ -34,8 +34,11 @@ describe("in repo with conflicts", function()
         -- arrange
         vim.cmd.edit(working_directory .. "/conflict-test/new.lua")
 
+        vim.fn.setqflist({}, "r")
+
         -- act
         commands.send_conflicts_to_qf()
+        vim.wait(5000, function() return #vim.fn.getqflist() > 0 end)
         local actual_qflist = vim.fn.getqflist()
 
         -- assert

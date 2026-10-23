@@ -42,11 +42,9 @@ end
 function M.refresh(bufnr)
     bufnr = resolve(bufnr)
     M.clear(bufnr)
-    if not vim.api.nvim_buf_is_valid(bufnr) or not parser.buf_can_have_conflicts(bufnr) then
-        return
-    end
+    if not vim.api.nvim_buf_is_loaded(bufnr) then return end
 
-    local positions = parser.detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
+    local positions = parser.buf_detect_conflicts(bufnr)
     if #positions == 0 then return end
 
     buf_conflicts[bufnr] = positions

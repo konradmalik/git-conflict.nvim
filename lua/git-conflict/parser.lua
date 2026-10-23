@@ -22,12 +22,14 @@ end
 ---Iterate through the buffer line by line checking there is a matching conflict marker
 ---when we find a starting mark we collect the position details and add it to a list of positions
 ---@param lines string[]
+---@param offset integer? 0-based line number of the first line, defaults to 0
 ---@return ConflictPosition[]
-local function detect_conflicts(lines)
+local function detect_conflicts(lines, offset)
+    offset = offset or 0
     local positions = {}
     local position
     for index, line in ipairs(lines) do
-        local lnum = index - 1
+        local lnum = offset + index - 1
         if line:match(markers.conflict_start) then
             position = { current = { range_start = lnum, content_start = lnum + 1 } }
         elseif position and not position.middle then
@@ -49,16 +51,19 @@ local function detect_conflicts(lines)
     return positions
 end
 
----@param bufnr integer
----@return boolean
-local function buf_can_have_conflicts(bufnr)
-    return vim.api.nvim_buf_call(
-        bufnr,
-        function() return vim.fn.search(markers.conflict_start, "cnw", nil, 500) end
-    ) > 0
+---@param bufnr integer loaded buffer
+---@return ConflictPosition[]
+local function buf_detect_conflicts(bufnr)
+    -- finding the start marker in C is much cheaper than parsing every line in lua,
+    -- so most buffers (without conflicts) never get their lines copied
+    local starts = vim.fn.matchbufline(bufnr, markers.conflict_start, 1, "$")
+    if #starts == 0 then return {} end
+    -- matchbufline lines are 1-based
+    local offset = starts[1].lnum - 1
+    return detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, offset, -1, false), offset)
 end
 
 return {
     detect_conflicts = detect_conflicts,
-    buf_can_have_conflicts = buf_can_have_conflicts,
+    buf_detect_conflicts = buf_detect_conflicts,
 }
