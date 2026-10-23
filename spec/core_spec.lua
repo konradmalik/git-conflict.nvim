@@ -52,7 +52,7 @@ describe("in buffer with conflicts", function()
                     ["range_start"] = 8,
                 },
                 ["middle"] = {
-                    ["range_end"] = 8,
+                    ["range_end"] = 7,
                     ["range_start"] = 7,
                 },
             },
@@ -103,6 +103,50 @@ describe("in buffer with conflicts", function()
         assert.is_nil(gc.positions(bufnr))
     end)
 
+    it("returns positions for the current buffer when given 0", function()
+        -- arrange
+        vim.api.nvim_set_current_buf(bufnr)
+
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        assert.are.same(gc.positions(bufnr), gc.positions(0))
+        assert.is_not_nil(gc.positions(0))
+    end)
+
+    it("publishes GitConflict event after decorating the buffer", function()
+        -- arrange
+        local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
+        local extmarks_at_event
+        local autocmd = vim.api.nvim_create_autocmd("User", {
+            pattern = "GitConflict",
+            callback = function()
+                extmarks_at_event = #vim.api.nvim_buf_get_extmarks(bufnr, nsid, 0, -1, {})
+            end,
+        })
+        finally(function() vim.api.nvim_del_autocmd(autocmd) end)
+
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        assert.are.same(6, extmarks_at_event)
+    end)
+
+    it("forgets positions when the buffer is wiped out", function()
+        -- arrange
+        dofile("plugin/git-conflict.lua")
+        finally(function() vim.api.nvim_del_augroup_by_name("GitConflict") end)
+        gc.refresh(bufnr)
+
+        -- act
+        vim.api.nvim_buf_delete(bufnr, { force = true })
+
+        -- assert
+        assert.is_nil(gc.positions(bufnr))
+    end)
+
     it("applies extmarks within namespace", function()
         -- arrange
         local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
@@ -111,12 +155,28 @@ describe("in buffer with conflicts", function()
         gc.refresh(bufnr)
 
         -- assert
-        assert_extmarks(bufnr, nsid, 2, "GitConflictCurrentLabel", 3)
+        assert_extmarks(bufnr, nsid, 1, "GitConflictCurrentLabel", 3)
         assert_extmarks(bufnr, nsid, 1, "GitConflictCurrent", 4)
-        assert_extmarks(bufnr, nsid, 2, "GitConflictAncestorLabel", 5)
+        assert_extmarks(bufnr, nsid, 1, "GitConflictAncestorLabel", 5)
         assert_extmarks(bufnr, nsid, 1, "GitConflictAncestor", 6)
         assert_extmarks(bufnr, nsid, 0, "", 7)
         assert_extmarks(bufnr, nsid, 1, "GitConflictIncoming", 8)
-        assert_extmarks(bufnr, nsid, 2, "GitConflictIncomingLabel", 9)
+        assert_extmarks(bufnr, nsid, 1, "GitConflictIncomingLabel", 9)
+    end)
+end)
+
+describe("setup", function()
+    after_each(function() gc.setup({ highlights = { current = "DiffText" } }) end)
+
+    it("overrides already defined highlights", function()
+        -- arrange
+        gc.set_highlights()
+
+        -- act
+        gc.setup({ highlights = { current = "Search" } })
+
+        -- assert
+        local expected_bg = vim.api.nvim_get_hl(0, { name = "Search" }).bg
+        assert.are.same(expected_bg, vim.api.nvim_get_hl(0, { name = "GitConflictCurrent" }).bg)
     end)
 end)

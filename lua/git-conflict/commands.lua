@@ -22,13 +22,19 @@ local function replace_conflict(bufnr, position, replacement)
     )
 end
 
----@param bufnr integer
----@param positions ConflictPosition[]
+---@param bufnr integer?
 ---@param action fun(bufnr: integer, position: ConflictPosition)
-local function process_current_conflict(bufnr, positions, action)
-    local line1, _ = unpack(vim.api.nvim_win_get_cursor(0))
+local function with_current_conflict(bufnr, action)
+    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    local win = vim.api.nvim_get_current_buf() == bufnr and 0 or vim.fn.bufwinid(bufnr)
+    if win == -1 then
+        vim.notify("buffer is not displayed in any window", vim.log.levels.WARN)
+        return
+    end
     -- lines from API are 0-indexed
-    local line = line1 - 1
+    local line = vim.api.nvim_win_get_cursor(win)[1] - 1
+    -- cached positions are stale if the buffer changed since the last refresh
+    local positions = parser.detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
     for _, position in ipairs(positions) do
         if position.current.range_start <= line and position.incoming.range_end >= line then
             action(bufnr, position)
@@ -38,15 +44,6 @@ local function process_current_conflict(bufnr, positions, action)
         end
     end
     vim.notify("no conflict at that line", vim.log.levels.WARN)
-end
-
----@param bufnr integer?
----@param action fun(bufnr: integer, position: ConflictPosition)
-local function with_current_conflict(bufnr, action)
-    if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
-    -- cached positions are stale if the buffer changed since the last refresh
-    local positions = parser.detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
-    process_current_conflict(bufnr, positions, action)
 end
 
 local M = {}

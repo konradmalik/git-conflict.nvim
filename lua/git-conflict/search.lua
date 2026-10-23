@@ -1,3 +1,5 @@
+local conflict_marker = require("git-conflict.markers").conflict_start
+
 ---@param conflicts string[] git grep output lines
 ---@param root string repo root used to resolve repo-relative filenames
 ---@return vim.quickfix.entry[]
@@ -16,16 +18,8 @@ local to_qf_items = function(conflicts, root)
     return qf_entries
 end
 
----@param conflicts string[]
----@param root string repo root used to resolve repo-relative filenames
-local stdout_to_qflist = function(conflicts, root)
-    vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = to_qf_items(conflicts, root) })
-    vim.cmd("copen")
-end
-
 ---@param bufnr integer
-local start_conflicts_job = function(bufnr)
-    local conflict_marker = require("git-conflict.markers").conflict_start
+local setqflist = function(bufnr)
     local git_root = vim.fs.root(bufnr, ".git")
     if not git_root then
         vim.notify("git-conflict: buffer not inside a git repository", vim.log.levels.WARN)
@@ -43,12 +37,17 @@ local start_conflicts_job = function(bufnr)
         text = true,
         cwd = git_root,
     }):wait()
-    if not obj.stdout then return end
-    local outlines = vim.fn.split(obj.stdout, "\n")
-    stdout_to_qflist(outlines, git_root)
+    -- git grep exits with 1 when nothing matched
+    if obj.code > 1 then
+        vim.notify("git-conflict: " .. obj.stderr, vim.log.levels.ERROR)
+        return
+    end
+    local items = to_qf_items(vim.split(obj.stdout, "\n", { trimempty = true }), git_root)
+    vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = items })
+    vim.cmd("copen")
 end
 
 return {
-    setqflist = start_conflicts_job,
+    setqflist = setqflist,
     to_qf_items = to_qf_items,
 }

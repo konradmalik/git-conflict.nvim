@@ -1,7 +1,7 @@
 --- @class ConflictHighlights
 --- @field current string
 --- @field incoming string
---- @field ancestor string?
+--- @field ancestor string
 
 --- @class ConflictLabels
 --- @field current string
@@ -22,27 +22,16 @@ local ANCESTOR_LABEL_HL = "GitConflictAncestorLabel"
 ---@param bufnr integer
 ---@param hl string
 ---@param range_start integer
----@param range_end integer
-local function hl_range(bufnr, hl, range_start, range_end)
-    if not range_start or not range_end then return end
+---@param range_end integer exclusive
+---@param label string? virtual text at the end of the first line
+local function hl_range(bufnr, hl, range_start, range_end, label)
     vim.api.nvim_buf_set_extmark(bufnr, NAMESPACE, range_start, 0, {
         hl_group = hl,
         hl_eol = true,
         hl_mode = "combine",
         end_row = range_end,
-        priority = PRIORITY,
-    })
-end
-
----@param bufnr integer
----@param hl_group string
----@param label string
----@param lnum integer
-local function draw_section_label(bufnr, hl_group, label, lnum)
-    vim.api.nvim_buf_set_extmark(bufnr, NAMESPACE, lnum, 0, {
-        hl_group = hl_group,
-        virt_text = { { label, hl_group } },
-        virt_text_pos = "eol",
+        virt_text = label and { { label, hl } },
+        virt_text_pos = label and "eol",
         priority = PRIORITY,
     })
 end
@@ -57,18 +46,15 @@ local function highlight_conflicts(bufnr, positions, labels)
         local incoming_start = position.incoming.range_start
         local incoming_end = position.incoming.range_end
 
-        draw_section_label(bufnr, CURRENT_LABEL_HL, labels.current, current_start)
-        hl_range(bufnr, CURRENT_LABEL_HL, current_start, current_start + 1)
+        hl_range(bufnr, CURRENT_LABEL_HL, current_start, current_start + 1, labels.current)
         hl_range(bufnr, CURRENT_HL, current_start + 1, current_end + 1)
-        draw_section_label(bufnr, INCOMING_LABEL_HL, labels.incoming, incoming_end)
         hl_range(bufnr, INCOMING_HL, incoming_start, incoming_end)
-        hl_range(bufnr, INCOMING_LABEL_HL, incoming_end, incoming_end + 1)
+        hl_range(bufnr, INCOMING_LABEL_HL, incoming_end, incoming_end + 1, labels.incoming)
 
         if position.ancestor then
             local ancestor_start = position.ancestor.range_start
             local ancestor_end = position.ancestor.range_end
-            draw_section_label(bufnr, ANCESTOR_LABEL_HL, labels.ancestor, ancestor_start)
-            hl_range(bufnr, ANCESTOR_LABEL_HL, ancestor_start, ancestor_start + 1)
+            hl_range(bufnr, ANCESTOR_LABEL_HL, ancestor_start, ancestor_start + 1, labels.ancestor)
             hl_range(bufnr, ANCESTOR_HL, ancestor_start + 1, ancestor_end + 1)
         end
     end
@@ -94,7 +80,8 @@ end
 local M = {}
 
 ---@param highlights ConflictHighlights
-function M.set_highlights(highlights)
+---@param default boolean keep highlight groups that are already defined
+function M.set_highlights(highlights, default)
     local groups = {
         {
             src = highlights.current,
@@ -117,8 +104,8 @@ function M.set_highlights(highlights)
     }
     for _, g in ipairs(groups) do
         local bg = vim.api.nvim_get_hl(0, { name = g.src }).bg or g.fallback
-        vim.api.nvim_set_hl(0, g.hl, { bg = bg, default = true })
-        vim.api.nvim_set_hl(0, g.label, { bg = bg, bold = true, default = true })
+        vim.api.nvim_set_hl(0, g.hl, { bg = bg, default = default })
+        vim.api.nvim_set_hl(0, g.label, { bg = bg, bold = true, default = default })
     end
 end
 
@@ -132,10 +119,9 @@ function M.apply(bufnr, positions, labels, enable_diagnostics)
 end
 
 ---@param bufnr integer
----@param enable_diagnostics boolean
-function M.clear(bufnr, enable_diagnostics)
+function M.clear(bufnr)
     vim.api.nvim_buf_clear_namespace(bufnr, NAMESPACE, 0, -1)
-    if enable_diagnostics then vim.diagnostic.reset(NAMESPACE, bufnr) end
+    vim.diagnostic.reset(NAMESPACE, bufnr)
 end
 
 return M
