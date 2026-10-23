@@ -37,13 +37,13 @@ local function detect_conflicts(lines)
                 ancestor = nil,
             }
         end
-        if has_start and line:match(markers.conflict_ancestor) then
+        if has_start and not has_middle and line:match(markers.conflict_ancestor) then
             assert(position, "position was nil")
             has_ancestor = true
             position.ancestor = { range_start = lnum, content_start = lnum + 1 }
             finish_range(position.current, lnum)
         end
-        if has_start and line:match(markers.conflict_middle) then
+        if has_start and not has_middle and line:match(markers.conflict_middle) then
             assert(position, "position was nil")
             has_middle = true
             finish_range(has_ancestor and position.ancestor or position.current, lnum)

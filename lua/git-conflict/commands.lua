@@ -1,4 +1,5 @@
 local gc = require("git-conflict")
+local parser = require("git-conflict.parser")
 local conflict_marker = require("git-conflict.markers").conflict_start
 
 ---@param bufnr integer
@@ -43,7 +44,8 @@ end
 ---@param action fun(bufnr: integer, position: ConflictPosition)
 local function with_current_conflict(bufnr, action)
     if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
-    local positions = gc.positions(bufnr) or {}
+    -- cached positions are stale if the buffer changed since the last refresh
+    local positions = parser.detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
     process_current_conflict(bufnr, positions, action)
 end
 

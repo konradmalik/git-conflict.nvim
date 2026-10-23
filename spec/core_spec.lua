@@ -94,6 +94,15 @@ describe("in buffer with conflicts", function()
         assert.are.same({}, actual_diagnostics)
     end)
 
+    it("does clear positions", function()
+        -- act
+        gc.refresh(bufnr)
+        gc.clear(bufnr)
+
+        -- assert
+        assert.is_nil(gc.positions(bufnr))
+    end)
+
     it("applies extmarks within namespace", function()
         -- arrange
         local nsid = vim.api.nvim_get_namespaces()["git-conflict"]

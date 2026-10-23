@@ -24,6 +24,7 @@ local M = {}
 ---@param bufnr integer?
 function M.clear(bufnr)
     if not bufnr or bufnr == 0 then bufnr = vim.api.nvim_get_current_buf() end
+    buf_conflicts[bufnr] = nil
     if not vim.api.nvim_buf_is_valid(bufnr) then return end
     decorations.clear(bufnr, config.enable_diagnostics)
 end
