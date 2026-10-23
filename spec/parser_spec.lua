@@ -16,7 +16,7 @@ describe("parser", function()
         assert.are.same({
             {
                 current = { range_start = 0, range_end = 1, content_start = 1, content_end = 1 },
-                middle = { range_start = 2, range_end = 3 },
+                middle = { range_start = 2, range_end = 2 },
                 incoming = { range_start = 3, range_end = 5, content_start = 3, content_end = 4 },
             },
         }, actual_positions)
@@ -37,7 +37,7 @@ describe("parser", function()
         assert.are.same({
             {
                 current = { range_start = 0, range_end = 2, content_start = 1, content_end = 2 },
-                middle = { range_start = 3, range_end = 4 },
+                middle = { range_start = 3, range_end = 3 },
                 incoming = { range_start = 4, range_end = 5, content_start = 4, content_end = 4 },
             },
         }, actual_positions)
@@ -57,7 +57,7 @@ describe("parser", function()
         assert.are.same({
             {
                 current = { range_start = 0, range_end = 1, content_start = 1, content_end = 1 },
-                middle = { range_start = 2, range_end = 3 },
+                middle = { range_start = 2, range_end = 2 },
                 incoming = { range_start = 3, range_end = 4, content_start = 3, content_end = 3 },
             },
         }, actual_positions)

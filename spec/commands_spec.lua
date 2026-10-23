@@ -126,6 +126,28 @@ describe("in buffer with conflicts", function()
         assert_cleared_diagnostics(bufnr)
     end)
 
+    it("uses cursor of the window showing the buffer", function()
+        -- arrange
+        utils.move_cursor_to_conflict(winnr)
+        local other_win = vim.api.nvim_open_win(vim.api.nvim_create_buf(true, false), true, {
+            split = "below",
+        })
+        finally(function() vim.api.nvim_win_close(other_win, true) end)
+
+        -- act
+        cmds.buf_conflict_choose_current(bufnr)
+
+        -- assert
+        local actual_content = utils.get_buf_lines(bufnr)
+        assert.are.same({
+            "the conflict",
+            "is below",
+            "",
+            "current",
+            "",
+        }, actual_content)
+    end)
+
     it("does not publish GitConflict event when resolving the last conflict", function()
         -- arrange
         utils.move_cursor_to_conflict(winnr)
