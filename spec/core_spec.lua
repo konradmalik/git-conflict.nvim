@@ -180,3 +180,47 @@ describe("setup", function()
         assert.are.same(expected_bg, vim.api.nvim_get_hl(0, { name = "GitConflictCurrent" }).bg)
     end)
 end)
+
+describe("refresh", function()
+    after_each(function() utils.close_buffers_except_initial() end)
+
+    it("ignores unloaded buffers", function()
+        -- arrange
+        local bufnr = vim.fn.bufadd("unloaded-buffer")
+
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        assert.is_nil(gc.positions(bufnr))
+    end)
+
+    it("detects every conflict after the first one", function()
+        -- arrange
+        local bufnr = vim.api.nvim_create_buf(true, false)
+        vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, {
+            "text",
+            "<<<<<<< HEAD",
+            "a",
+            "=======",
+            "b",
+            ">>>>>>> branch",
+            "text",
+            "<<<<<<< HEAD",
+            "c",
+            "=======",
+            "d",
+            ">>>>>>> branch",
+        })
+
+        -- act
+        gc.refresh(bufnr)
+
+        -- assert
+        local actual_ranges = vim.tbl_map(
+            function(p) return { p.current.range_start, p.incoming.range_end } end,
+            gc.positions(bufnr)
+        )
+        assert.are.same({ { 1, 5 }, { 7, 11 } }, actual_ranges)
+    end)
+end)

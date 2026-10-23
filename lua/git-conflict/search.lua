@@ -25,26 +25,31 @@ local setqflist = function(bufnr)
         vim.notify("git-conflict: buffer not inside a git repository", vim.log.levels.WARN)
         return
     end
-    local obj = vim.system({
-        "git",
-        "--no-pager",
-        "grep",
-        "--no-color",
-        "--full-name",
-        "--line-number",
-        conflict_marker,
-    }, {
-        text = true,
-        cwd = git_root,
-    }):wait()
-    -- git grep exits with 1 when nothing matched
-    if obj.code > 1 then
-        vim.notify("git-conflict: " .. obj.stderr, vim.log.levels.ERROR)
-        return
-    end
-    local items = to_qf_items(vim.split(obj.stdout, "\n", { trimempty = true }), git_root)
-    vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = items })
-    vim.cmd("copen")
+    vim.system(
+        {
+            "git",
+            "--no-pager",
+            "grep",
+            "--no-color",
+            "--full-name",
+            "--line-number",
+            conflict_marker,
+        },
+        {
+            text = true,
+            cwd = git_root,
+        },
+        vim.schedule_wrap(function(obj)
+            -- git grep exits with 1 when nothing matched
+            if obj.code > 1 then
+                vim.notify("git-conflict: " .. obj.stderr, vim.log.levels.ERROR)
+                return
+            end
+            local items = to_qf_items(vim.split(obj.stdout, "\n", { trimempty = true }), git_root)
+            vim.fn.setqflist({}, "r", { title = "Git Conflicts", items = items })
+            vim.cmd("copen")
+        end)
+    )
 end
 
 return {

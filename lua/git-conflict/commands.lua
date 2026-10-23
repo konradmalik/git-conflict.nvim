@@ -34,8 +34,7 @@ local function with_current_conflict(bufnr, action)
     -- lines from API are 0-indexed
     local line = vim.api.nvim_win_get_cursor(win)[1] - 1
     -- cached positions are stale if the buffer changed since the last refresh
-    local positions = parser.detect_conflicts(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false))
-    for _, position in ipairs(positions) do
+    for _, position in ipairs(parser.buf_detect_conflicts(bufnr)) do
         if position.current.range_start <= line and position.incoming.range_end >= line then
             action(bufnr, position)
             -- important to refresh after changing the conflict
