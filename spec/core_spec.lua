@@ -147,6 +147,31 @@ describe("in buffer with conflicts", function()
         assert.is_nil(gc.positions(bufnr))
     end)
 
+    it("refreshes normal buffers on read", function()
+        -- arrange
+        dofile("plugin/git-conflict.lua")
+        finally(function() vim.api.nvim_del_augroup_by_name("GitConflict") end)
+
+        -- act
+        vim.api.nvim_exec_autocmds("BufReadPost", { buffer = bufnr })
+
+        -- assert
+        assert.are.same(1, #gc.positions(bufnr))
+    end)
+
+    it("skips special buffers on read", function()
+        -- arrange
+        dofile("plugin/git-conflict.lua")
+        finally(function() vim.api.nvim_del_augroup_by_name("GitConflict") end)
+        vim.bo[bufnr].buftype = "nofile"
+
+        -- act
+        vim.api.nvim_exec_autocmds("BufReadPost", { buffer = bufnr })
+
+        -- assert
+        assert.is_nil(gc.positions(bufnr))
+    end)
+
     it("applies extmarks within namespace", function()
         -- arrange
         local nsid = vim.api.nvim_get_namespaces()["git-conflict"]
